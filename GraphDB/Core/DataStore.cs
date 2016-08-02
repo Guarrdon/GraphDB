@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GraphDBTest
+namespace GraphDB.Core
 {
     public class DataStore2
     {
@@ -23,7 +23,7 @@ namespace GraphDBTest
         public DataStore2()
         {
             NextIndex = 0;
-            Store = new Entity[GraphDB.MAX_ITEMS];
+            Store = new Entity[GraphDBEngine.MAX_ITEMS];
         }
 
         public int Add(Entity obj)

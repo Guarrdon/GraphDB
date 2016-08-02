@@ -1,10 +1,11 @@
-﻿using System;
+﻿using GraphDB.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GraphDBTest
+namespace GraphDB.UserDefined
 {
     public class Family : Entity
     {

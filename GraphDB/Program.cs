@@ -3,12 +3,44 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GraphDB.Core;
+using GraphDB.UserDefined;
+using GraphDB.Core.Persisted;
+using GraphDB.Core.Transactions;
 
-namespace GraphDBTest
+namespace GraphDB
 {
     class Program
     {
         static void Main(string[] args)
+        {
+            DataFileManager.Use("GraphTestDB", @"c:\temp\MMF");
+            var db = new GraphDBEngine();
+            var fam = new Graph(new Family { FamilyName = "Test Family" });
+            for (int i=0; i<10000; i++)
+            {
+                fam.Add<IsFamilyOf>(new Graph(new Person { Name = $"Name:{i}" }));
+            }
+            db.Merge(fam);
+
+            var x1 = db.Get("GraphDB.UserDefined.Person|2001");
+            db.Remove(x1);
+            Console.ReadKey();
+
+            var x2 = db.Get("GraphDB.UserDefined.Person|4000");
+            db.Remove(x2);
+            Console.ReadKey();
+
+
+            var x3 = db.Get("GraphDB.UserDefined.Person|6000");
+            db.Remove(x3);
+            Console.ReadKey();
+
+
+            GraphTransactionManager.Use().Dispose();
+        }
+
+        public static void Test1()
         {
             //Build some test data entities
             //Keep only one entity (never copies)
@@ -56,8 +88,9 @@ namespace GraphDBTest
             p7.Add<HasHairOf>(h3);
 
             //Create new GraphDB object and merge data into db
-            var db = new GraphDB();
+            var db = new GraphDBEngine();
             db.Merge(f1);
+            
 
             //Data is now queryable
             //StartWith(1) and then (Filter(1-N) or Related(1-N))
@@ -75,9 +108,7 @@ namespace GraphDBTest
                 .Where<Hair>(x => x.Color == "None")
                 .Related<HasHairOf>(true)
                 .Related<IsBrotherOf>());
-
         }
-
 
 
     }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GraphDBTest
+namespace GraphDB.Core
 {
 
     public class Graph

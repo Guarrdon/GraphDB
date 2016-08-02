@@ -61,6 +61,10 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -71,21 +75,28 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DataStore.cs" />
-    <Compile Include="Filter.cs" />
-    <Compile Include="IndexItems.cs" />
-    <Compile Include="ModelRelationships.cs" />
-    <Compile Include="Models.cs" />
-    <Compile Include="Entity.cs" />
-    <Compile Include="Graph.cs" />
-    <Compile Include="GraphExtensions.cs" />
-    <Compile Include="GraphDB.cs" />
+    <Compile Include="Core\DataStore.cs" />
+    <Compile Include="Core\Filter.cs" />
+    <Compile Include="Core\Persisted\DataFileEnd.cs" />
+    <Compile Include="Core\Persisted\DataFileManager.cs" />
+    <Compile Include="Core\Persisted\GraphDBData.cs" />
+    <Compile Include="Core\Transactions\GraphTransaction.cs" />
+    <Compile Include="Core\IndexItems.cs" />
+    <Compile Include="Core\Transactions\GraphTransactionManager.cs" />
+    <Compile Include="Core\Transactions\GraphTransactionOperation.cs" />
+    <Compile Include="UserDefined\ModelRelationships.cs" />
+    <Compile Include="UserDefined\Models.cs" />
+    <Compile Include="Core\Entity.cs" />
+    <Compile Include="Core\Graph.cs" />
+    <Compile Include="Core\GraphExtensions.cs" />
+    <Compile Include="Core\GraphDBEngine.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Relationship.cs" />
+    <Compile Include="Core\Relationship.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="ReadMe.txt" />

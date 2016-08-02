@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GraphDBTest
+namespace GraphDB.Core
 {
 
 
-    public class IndexItem
+    public class GraphItem
     {
         public string EntityID { get; set; }
         public int StoreId { get; set; }
@@ -16,7 +16,7 @@ namespace GraphDBTest
 
         public HashSet<RelatedItem> Related { get; set; }
 
-        public IndexItem()
+        public GraphItem()
         {
             Related = new HashSet<RelatedItem>();
         }
@@ -26,5 +26,11 @@ namespace GraphDBTest
         public int Index;
         public string Relationship;
         public bool Inverse;
+    }
+
+    public struct LookupItem
+    {
+        public string ObjectId;
+        public int Index;
     }
 }

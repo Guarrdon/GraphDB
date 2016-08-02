@@ -1,16 +1,17 @@
-﻿using System;
+﻿using GraphDB.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GraphDBTest
+namespace GraphDB.Core
 {
-    public class GraphDB
+    public class GraphDBEngine
     {
         public const int MAX_ITEMS = 10000000; //10,000,000
 
-        protected IndexItem[] Items;
+        protected GraphItem[] Items;
         protected Dictionary<string, int> ItemIndex { get; set; }
 
         protected int NextItem;
@@ -18,9 +19,9 @@ namespace GraphDBTest
         /// <summary>
         /// constructor
         /// </summary>
-        public GraphDB()
+        public GraphDBEngine()
         {
-            Items = new IndexItem[MAX_ITEMS];
+            Items = new GraphItem[MAX_ITEMS];
             ItemIndex = new Dictionary<string, int>();
 
             NextItem = 0;
@@ -43,7 +44,7 @@ namespace GraphDBTest
                 if (graph.CurrentEntity.Id == null)
                 {
                     graph.CurrentEntity.Id = $"{graph.TypeName}|{NextItem}";
-                    Items[NextItem] = new IndexItem();
+                    Items[NextItem] = new GraphItem();
                     Items[NextItem].EntityID = graph.CurrentEntity.Id;
                     Items[NextItem].EntityTypeName = graph.TypeName;
                     Items[NextItem].StoreId = DataStore2.Use().Add(graph.CurrentEntity);
@@ -185,17 +186,34 @@ namespace GraphDBTest
         {
             var id = ItemIndex[graph.CurrentEntity.Id];
             var item = Items[id];
-            foreach (RelatedItem r in item.Related)
+            using (var transaction = new GraphTransaction())
             {
-                var relateditem = Items[r.Index];
-                relateditem.Related.RemoveWhere(x => x.Index == id);
+                foreach (RelatedItem r in item.Related)
+                {
+                    var relateditem = Items[r.Index];
+                    var matchingItems = relateditem.Related.Where(x => x.Index == id).ToList();
+                    foreach (RelatedItem match in matchingItems)
+                    {
+                        relateditem.Related.Remove(match);
+                        transaction.Remove(match.Index, TransactionType.RelatedIndex);
+                    }
+                }
+                DataStore2.Use().Remove(item.StoreId);
+                transaction.Remove(item.StoreId, TransactionType.StoreIndex);
+
+                ItemIndex.Remove(item.EntityID);
+                transaction.RemoveLookup(item.EntityID);
+
+                Items[id] = null;
+                transaction.Remove(id, TransactionType.GraphIndex);
             }
-            DataStore2.Use().Remove(item.StoreId);
-            ItemIndex.Remove(item.EntityID);
-            Items[id] = null;
         }
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="filter"></param>
+        /// <returns></returns>
         public IEnumerable<Graph> Get(Filter filter)
         {
             var indexes = new HashSet<int>();
@@ -247,7 +265,7 @@ namespace GraphDBTest
                     var container = filter.RelatedClauses.Dequeue();
                     var relationship = Relationship.Create(container.RelationshipTypeName);
                     var inverse = container.Inverse;
-                    IndexItem item = null;
+                    GraphItem item = null;
                     foreach (int idx in indexes)
                     {
                         item = Items[idx];
@@ -267,7 +285,11 @@ namespace GraphDBTest
 
         public void Test()
         {
-            DataStore2.Use().Test();
+            var s = Newtonsoft.Json.JsonConvert.SerializeObject(Items);
+            System.IO.File.WriteAllText(@"c:\temp\MMF\Items3.txt",s);
+
+            var t = Newtonsoft.Json.JsonConvert.DeserializeObject<GraphItem[]>(s);
+            var y = System.IO.File.ReadAllText(@"c:\temp\MMF\Items3.txt");
         }
 
     }
