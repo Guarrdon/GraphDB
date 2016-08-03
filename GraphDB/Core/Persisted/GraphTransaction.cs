@@ -1,4 +1,5 @@
-﻿using GraphDB.Core.Transactions;
+﻿using GraphDB.Core.Persisted;
+using GraphDB.Core.Transactions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,8 +30,7 @@ namespace GraphDB.Core
     public class GraphTransaction : IDisposable
     {
 
-        protected Queue<GraphTransactionOperation> Operations { get; set; }
-
+        public Queue<GraphTransactionOperation> Operations { get; set; }
         public GraphTransaction()
         {
             Operations = new Queue<GraphTransactionOperation>();
@@ -59,7 +59,6 @@ namespace GraphDB.Core
 
         public void Dispose()
         {
-            GraphTransactionManager.Use().PersistTransaction(Operations);
         }
     }
 

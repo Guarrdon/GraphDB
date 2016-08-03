@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace GraphDB.Core
 {
-    public class DataStore2
+    public class DataStore
     {
-        private static DataStore2 _Internal;
-        public static DataStore2 Use()
+        private static DataStore _Internal;
+        public static DataStore Use()
         {
             if (_Internal == null)
-                _Internal = new DataStore2();
+                _Internal = new DataStore();
 
             return _Internal;
         }
@@ -20,7 +20,7 @@ namespace GraphDB.Core
         protected Entity[] Store;
         protected int NextIndex;
 
-        public DataStore2()
+        public DataStore()
         {
             NextIndex = 0;
             Store = new Entity[GraphDBEngine.MAX_ITEMS];

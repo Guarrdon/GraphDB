@@ -1,20 +1,29 @@
-﻿using GraphDB.Core;
+﻿using GraphDB.Core.Persisted;
+using GraphDB.Core.Transactions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GraphDB.Core
 {
-    public class GraphDBEngine
+    public delegate void ApplyTransactionHandler(Queue<GraphTransactionOperation> transaction);
+    public delegate void ApplyDataHandler(int index);
+
+    public class GraphDBEngine:IDisposable
     {
+
+
         public const int MAX_ITEMS = 10000000; //10,000,000
 
         protected GraphItem[] Items;
         protected Dictionary<string, int> ItemIndex { get; set; }
 
         protected int NextItem;
+
+        public event ApplyTransactionHandler ApplyTransaction;
+        public event ApplyDataHandler ApplyData;
+        public event ApplyDataHandler ApplyIndex;
+
 
         /// <summary>
         /// constructor
@@ -47,14 +56,18 @@ namespace GraphDB.Core
                     Items[NextItem] = new GraphItem();
                     Items[NextItem].EntityID = graph.CurrentEntity.Id;
                     Items[NextItem].EntityTypeName = graph.TypeName;
-                    Items[NextItem].StoreId = DataStore2.Use().Add(graph.CurrentEntity);
+                    Items[NextItem].StoreId = DataStore.Use().Add(graph.CurrentEntity);
+                    ApplyData(Items[NextItem].StoreId);
                     ItemIndex.Add(graph.CurrentEntity.Id, NextItem);
+                    ApplyIndex(NextItem);
 
                     NextItem++;
                 }
                 else
                 {
-                    DataStore2.Use().Set(Items[ItemIndex[graph.CurrentEntity.Id]].StoreId, graph.CurrentEntity);
+                    var storeId = Items[ItemIndex[graph.CurrentEntity.Id]].StoreId;
+                    DataStore.Use().Set(storeId, graph.CurrentEntity);
+                    ApplyData(storeId);
                 }
                 mergeOperations.Add(graph.CurrentEntity.Id);
 
@@ -105,7 +118,7 @@ namespace GraphDB.Core
             if (ItemIndex.ContainsKey(objectId))
             {
                 var item = Items[ItemIndex[objectId]];
-                var entity = DataStore2.Use().Get(item.StoreId);
+                var entity = DataStore.Use().Get(item.StoreId);
                 var graph = new Graph(entity);
 
                 if (limitHierarchy)
@@ -120,7 +133,7 @@ namespace GraphDB.Core
         protected Graph GetInternalLimited(int index)
         {
             var item = Items[index];
-            var entity = DataStore2.Use().Get(item.StoreId);
+            var entity = DataStore.Use().Get(item.StoreId);
             var graph = new Graph(entity);
 
             var limit = false;
@@ -157,7 +170,7 @@ namespace GraphDB.Core
                 if (!mergeOperations.ContainsKey(objectId))
                 {
                     var item = Items[ItemIndex[objectId]];
-                    var entity = DataStore2.Use().Get(item.StoreId);
+                    var entity = DataStore.Use().Get(item.StoreId);
                     var graph = new Graph(entity);
                     mergeOperations.Add(objectId, graph);
 
@@ -178,39 +191,7 @@ namespace GraphDB.Core
             }
         }
         /// <summary>
-        /// Removes nodes from graph database and deletes data in data store
-        /// Will only remove primary node in graph and all relationships with ONLY that primary node
-        /// </summary>
-        /// <param name="graph"></param>
-        public void Remove(Graph graph)
-        {
-            var id = ItemIndex[graph.CurrentEntity.Id];
-            var item = Items[id];
-            using (var transaction = new GraphTransaction())
-            {
-                foreach (RelatedItem r in item.Related)
-                {
-                    var relateditem = Items[r.Index];
-                    var matchingItems = relateditem.Related.Where(x => x.Index == id).ToList();
-                    foreach (RelatedItem match in matchingItems)
-                    {
-                        relateditem.Related.Remove(match);
-                        transaction.Remove(match.Index, TransactionType.RelatedIndex);
-                    }
-                }
-                DataStore2.Use().Remove(item.StoreId);
-                transaction.Remove(item.StoreId, TransactionType.StoreIndex);
-
-                ItemIndex.Remove(item.EntityID);
-                transaction.RemoveLookup(item.EntityID);
-
-                Items[id] = null;
-                transaction.Remove(id, TransactionType.GraphIndex);
-            }
-        }
-
-        /// <summary>
-        /// 
+        /// Get by filter
         /// </summary>
         /// <param name="filter"></param>
         /// <returns></returns>
@@ -251,7 +232,7 @@ namespace GraphDB.Core
                     var where = filter.WhereClauses.Dequeue();
                     foreach (int idx in indexes)
                     {
-                        var obj = DataStore2.Use().Get(Items[idx].StoreId);
+                        var obj = DataStore.Use().Get(Items[idx].StoreId);
                         var match = (bool)where.Compile().DynamicInvoke(obj);
                         if (match)
                             newIndexes.Add(idx);
@@ -283,15 +264,53 @@ namespace GraphDB.Core
         }
 
 
+        /// <summary>
+        /// Removes nodes from graph database and deletes data in data store
+        /// Will only remove primary node in graph and all relationships with ONLY that primary node
+        /// </summary>
+        /// <param name="graph"></param>
+        public void Remove(Graph graph)
+        {
+            var id = ItemIndex[graph.CurrentEntity.Id];
+            var item = Items[id];
+            using (var transaction = new GraphTransaction())
+            {
+                foreach (RelatedItem r in item.Related)
+                {
+                    var relateditem = Items[r.Index];
+                    var matchingItems = relateditem.Related.Where(x => x.Index == id).ToList();
+                    foreach (RelatedItem match in matchingItems)
+                    {
+                        relateditem.Related.Remove(match);
+                        transaction.Remove(match.Index, TransactionType.RelatedIndex);
+                    }
+                }
+                DataStore.Use().Remove(item.StoreId);
+                transaction.Remove(item.StoreId, TransactionType.StoreIndex);
+
+                ItemIndex.Remove(item.EntityID);
+                transaction.RemoveLookup(item.EntityID);
+
+                Items[id] = null;
+                transaction.Remove(id, TransactionType.GraphIndex);
+
+                ApplyTransaction(transaction.Operations);
+            }
+        }
+
         public void Test()
         {
             var s = Newtonsoft.Json.JsonConvert.SerializeObject(Items);
-            System.IO.File.WriteAllText(@"c:\temp\MMF\Items3.txt",s);
+            System.IO.File.WriteAllText(@"c:\temp\MMF\Items3.txt", s);
 
             var t = Newtonsoft.Json.JsonConvert.DeserializeObject<GraphItem[]>(s);
             var y = System.IO.File.ReadAllText(@"c:\temp\MMF\Items3.txt");
         }
 
+        public void Dispose()
+        {
+            //throw new NotImplementedException();
+        }
     }
 
 

@@ -14,30 +14,30 @@ namespace GraphDB
     {
         static void Main(string[] args)
         {
-            DataFileManager.Use("GraphTestDB", @"c:\temp\MMF");
-            var db = new GraphDBEngine();
-            var fam = new Graph(new Family { FamilyName = "Test Family" });
-            for (int i=0; i<10000; i++)
+            using (var app = new GraphDBLoader())
             {
-                fam.Add<IsFamilyOf>(new Graph(new Person { Name = $"Name:{i}" }));
+                var fam = new Graph(new Family { FamilyName = "Test Family" });
+                for (int i = 0; i < 10000; i++)
+                {
+                    fam.Add<IsFamilyOf>(new Graph(new Person { Name = $"Name:{i}" }));
+                }
+                app.DB.Merge(fam);
+
+                var x1 = app.DB.Get("GraphDB.UserDefined.Person|2001");
+                app.DB.Remove(x1);
+                Console.ReadKey();
+
+                var x2 = app.DB.Get("GraphDB.UserDefined.Person|4000");
+                app.DB.Remove(x2);
+                Console.ReadKey();
+
+
+                var x3 = app.DB.Get("GraphDB.UserDefined.Person|6000");
+                app.DB.Remove(x3);
+                Console.ReadKey();
             }
-            db.Merge(fam);
 
-            var x1 = db.Get("GraphDB.UserDefined.Person|2001");
-            db.Remove(x1);
-            Console.ReadKey();
-
-            var x2 = db.Get("GraphDB.UserDefined.Person|4000");
-            db.Remove(x2);
-            Console.ReadKey();
-
-
-            var x3 = db.Get("GraphDB.UserDefined.Person|6000");
-            db.Remove(x3);
-            Console.ReadKey();
-
-
-            GraphTransactionManager.Use().Dispose();
+            //TransactionFileManager.Use().Dispose();
         }
 
         public static void Test1()

@@ -77,13 +77,16 @@
   <ItemGroup>
     <Compile Include="Core\DataStore.cs" />
     <Compile Include="Core\Filter.cs" />
+    <Compile Include="Core\Persisted\GraphDBLoader.cs" />
+    <Compile Include="Core\Persisted\AppSettings.cs" />
     <Compile Include="Core\Persisted\DataFileEnd.cs" />
     <Compile Include="Core\Persisted\DataFileManager.cs" />
-    <Compile Include="Core\Persisted\GraphDBData.cs" />
-    <Compile Include="Core\Transactions\GraphTransaction.cs" />
+    <Compile Include="Core\Persisted\GraphTransaction.cs" />
     <Compile Include="Core\IndexItems.cs" />
-    <Compile Include="Core\Transactions\GraphTransactionManager.cs" />
-    <Compile Include="Core\Transactions\GraphTransactionOperation.cs" />
+    <Compile Include="Core\Persisted\TransactionFileManager.cs" />
+    <Compile Include="Core\Persisted\GraphTransactionOperation.cs" />
+    <Compile Include="Core\Persisted\IndexFileManager.cs" />
+    <Compile Include="Core\Persisted\PersistManagerBase.cs" />
     <Compile Include="UserDefined\ModelRelationships.cs" />
     <Compile Include="UserDefined\Models.cs" />
     <Compile Include="Core\Entity.cs" />
